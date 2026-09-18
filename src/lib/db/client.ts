@@ -19,15 +19,40 @@ function required(name: string): string {
   return value;
 }
 
+let warnedAboutUrl = false;
+
+/**
+ * Reduce the configured URL to the project origin.
+ *
+ * supabase-js appends `/rest/v1` itself. The Supabase dashboard shows the REST
+ * endpoint next to the project URL, and pasting that one instead produces
+ * `.../rest/v1//rest/v1/templates`, which the API rejects with the unhelpful
+ * "Invalid path specified in request URL". Normalising here costs three lines
+ * and removes a whole class of setup failure.
+ */
+export function projectUrl(): string {
+  const raw = required("NEXT_PUBLIC_SUPABASE_URL").trim();
+  const normalised = raw.replace(/\/+$/, "").replace(/\/rest\/v1$/, "").replace(/\/+$/, "");
+
+  if (normalised !== raw && !warnedAboutUrl) {
+    warnedAboutUrl = true;
+    console.warn(
+      `NEXT_PUBLIC_SUPABASE_URL was "${raw}"; using "${normalised}". ` +
+        `Set it to the project URL only, without a path or trailing slash.`,
+    );
+  }
+  return normalised;
+}
+
 export function supabaseRead(): SupabaseClient {
-  return createClient(required("NEXT_PUBLIC_SUPABASE_URL"), required("NEXT_PUBLIC_SUPABASE_ANON_KEY"), {
+  return createClient(projectUrl(), required("NEXT_PUBLIC_SUPABASE_ANON_KEY"), {
     auth: { persistSession: false },
   });
 }
 
 /** Server only. Bypasses row level security. Never import into a client component. */
 export function supabaseWrite(): SupabaseClient {
-  return createClient(required("NEXT_PUBLIC_SUPABASE_URL"), required("SUPABASE_SERVICE_ROLE_KEY"), {
+  return createClient(projectUrl(), required("SUPABASE_SERVICE_ROLE_KEY"), {
     auth: { persistSession: false },
   });
 }
