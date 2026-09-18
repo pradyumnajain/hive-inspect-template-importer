@@ -1,58 +1,16 @@
-import DOMPurify from "isomorphic-dompurify";
-
 /**
- * Sanitise comment HTML at render time, never on the way in.
+ * Plain-text helpers. No HTML sanitising here, and no DOM library.
  *
- * Storing a cleaned version would silently rewrite the customer's content,
- * which is the one thing this importer must not do. The database keeps the
- * export byte for byte; this is the only place anything is stripped, and only
- * for the browser's benefit.
+ * Sanitising happens in the browser, immediately before the markup is
+ * inserted, in `src/components/SafeHtml.tsx`. Doing it on the server meant
+ * shipping a full DOM implementation into a serverless function to clean a
+ * paragraph of HTML, which is both wasteful and fragile.
  *
- * The allowlist covers everything the real export uses (p, a, strong, div)
- * plus the obvious rich-text neighbours an inspector might have added.
+ * What has not changed: the database still stores the customer's comment text
+ * byte for byte. Nothing is ever cleaned on the way in.
  */
-const ALLOWED_TAGS = [
-  "p",
-  "br",
-  "strong",
-  "b",
-  "em",
-  "i",
-  "u",
-  "s",
-  "ul",
-  "ol",
-  "li",
-  "a",
-  "span",
-  "div",
-  "h1",
-  "h2",
-  "h3",
-  "h4",
-  "blockquote",
-  "code",
-  "pre",
-  "table",
-  "thead",
-  "tbody",
-  "tr",
-  "th",
-  "td",
-];
 
-export function sanitizeCommentHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR: ["href", "target", "rel", "title"],
-    // Anything that could execute or phone out.
-    FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "form", "input"],
-    FORBID_ATTR: ["style", "onerror", "onload", "onclick"],
-    ALLOW_DATA_ATTR: false,
-  });
-}
-
-/** Plain text preview for collapsed rows. */
+/** Readable one-line summary of a comment body, for collapsed rows. */
 export function toPlainText(html: string, limit = 160): string {
   const text = html
     .replace(/<[^>]*>/g, " ")
