@@ -127,6 +127,20 @@ describe("the report fails when preservation breaks", () => {
     expect(check.discrepancies[0].actual).toBe("Yes");
   });
 
+  it("does not flag a blank Section or Item that was carried forward", () => {
+    // The parser inherits a blank hierarchy cell from the row above and says so.
+    // The fidelity walk has to inherit the same way, or it reports documented
+    // behaviour as data loss.
+    const carried = grid([
+      HEADER,
+      ["Roof", "Coverings", "Missing shingle", "<p>a</p>", "", "0"],
+      [null, null, "Moss", "<p>b</p>", "", "0"],
+    ]);
+    const report = buildFidelityReport(carried, parseGrid(carried, "carried.xlsx"));
+    expect(report.checks.find((c) => c.id === "hierarchy")!.status).toBe("pass");
+    expect(report.passed).toBe(report.total);
+  });
+
   it("catches a dropped unsupported column value", () => {
     const result = baseline();
     delete result.template.sections[0].items[0].comments[0].extra["Uses"];

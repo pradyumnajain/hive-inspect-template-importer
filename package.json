@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "tsx --env-file-if-exists=.env.local scripts/seed.mts",
+    "report": "tsx scripts/report.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
@@ -27,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^5.0.1"
   }

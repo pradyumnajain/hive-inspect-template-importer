@@ -104,11 +104,38 @@ export function buildFidelityReport(grid: RawGrid, result: ParseResult): Fidelit
   const headerRowIndex = findHeaderRowIndex(grid, result);
   const map = mapHeaders(grid.rows[headerRowIndex]);
 
-  const sourceRows: { row: (string | null)[]; sourceRow: number }[] = [];
+  const sectionCol = mapHeaders(grid.rows[headerRowIndex]).index.sectionName;
+  const itemCol = mapHeaders(grid.rows[headerRowIndex]).index.itemName;
+
+  /**
+   * Walk the source rows the same way the parser did, including carrying a
+   * blank Section or Item forward from the row above. Comparing against the
+   * literal blank cell would report the parser's documented behaviour as data
+   * loss, which is the opposite of useful.
+   */
+  const sourceRows: {
+    row: (string | null)[];
+    sourceRow: number;
+    section: string | null;
+    item: string | null;
+    inherited: boolean;
+  }[] = [];
+  let lastSection: string | null = null;
+  let lastItem: string | null = null;
+
   for (let r = headerRowIndex + 1; r < grid.rows.length; r += 1) {
     const row = grid.rows[r];
     if (row.every(isBlank)) continue;
-    sourceRows.push({ row, sourceRow: r + 1 });
+
+    const rawSection = sectionCol === undefined ? null : (row[sectionCol] ?? null);
+    const rawItem = itemCol === undefined ? null : (row[itemCol] ?? null);
+    const inherited = (isBlank(rawSection) && lastSection !== null) || (isBlank(rawItem) && lastItem !== null);
+    const section: string | null = isBlank(rawSection) ? lastSection : rawSection;
+    const item: string | null = isBlank(rawItem) ? lastItem : rawItem;
+    if (section !== null) lastSection = section;
+    if (item !== null) lastItem = item;
+
+    sourceRows.push({ row, sourceRow: r + 1, section, item, inherited });
   }
 
   // Flatten the parsed tree in traversal order, carrying each comment's parents.
@@ -155,7 +182,7 @@ export function buildFidelityReport(grid: RawGrid, result: ParseResult): Fidelit
     "Sections preserved",
     "Every distinct section in the file exists, with the same name and in the same order.",
   );
-  const sourceSections = distinctInOrder(sourceRows.map(({ row }) => cellOf(row, "sectionName")));
+  const sourceSections = distinctInOrder(sourceRows.map(({ section }) => section));
   const parsedSections = result.template.sections.map((s) => s.nameRaw);
   compareSequences(sectionsCheck, sourceSections, parsedSections, headerOf("sectionName"));
   checks.push(sectionsCheck.build());
@@ -167,11 +194,7 @@ export function buildFidelityReport(grid: RawGrid, result: ParseResult): Fidelit
     "Every distinct item exists under the right section, with the same name and order.",
   );
   const sourceItems = distinctInOrder(
-    sourceRows.map(({ row }) => {
-      const s = cellOf(row, "sectionName");
-      const i = cellOf(row, "itemName");
-      return s === null || i === null ? null : `${s}${SEP}${i}`;
-    }),
+    sourceRows.map(({ section, item }) => (section === null || item === null ? null : `${section}${SEP}${item}`)),
   );
   const parsedItems: string[] = [];
   for (const s of result.template.sections) {
@@ -210,16 +233,17 @@ export function buildFidelityReport(grid: RawGrid, result: ParseResult): Fidelit
     "Hierarchy preserved",
     "Each comment sits under the section and item its source row named.",
   );
-  for (const { row, sourceRow } of sourceRows) {
+  for (const { sourceRow, section, item, inherited } of sourceRows) {
     const found = byRow.get(sourceRow);
     if (!found) continue;
-    const expected = `${cellOf(row, "sectionName")} > ${cellOf(row, "itemName")}`;
+    const expected = `${section} > ${item}`;
     const actual = `${found.sectionRaw} > ${found.itemRaw}`;
     hierarchyCheck.compare(expected === actual, () => ({
       sourceRow,
       sourceColumn: headerOf("sectionName"),
       expected,
       actual,
+      note: inherited ? "inherited from the row above" : undefined,
     }));
   }
   checks.push(hierarchyCheck.build());
