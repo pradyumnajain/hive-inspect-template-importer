@@ -9,7 +9,6 @@ import { decodeEntities, findEmptyEmbeds } from "./html";
 import {
   SpectoraImportError,
   type ImportIssue,
-  type ParsedComment,
   type ParsedItem,
   type ParsedSection,
   type ParseResult,
