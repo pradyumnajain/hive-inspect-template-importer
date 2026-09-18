@@ -5,8 +5,12 @@ survived the import, edit it, and duplicate it without the copy and the original
 ever touching each other.
 
 Built for the Hive Inspect Forward Deployed Engineer assignment. The design
-notes, known limitations and what was deliberately left out are in
-[NOTES.md](NOTES.md).
+notes, the comparison with how Hive Inspect imports the same file, known
+limitations and what was deliberately left out are in [NOTES.md](NOTES.md).
+
+**Reviewer access:** there is no login. Open the live URL and it lands on an
+already-imported template. Nothing is gated, and no account or credential is
+needed to import, edit or duplicate.
 
 ---
 
@@ -113,11 +117,16 @@ Open http://localhost:3000.
 | `npm run seed` | Import the committed sample export |
 | `npm run report -- <file>` | Print the parse summary, fidelity report and warnings for any export, without a database |
 
-`npm run report` is the fastest way to check whether a new Spectora file parses:
+`npm run report` is the fastest way to check whether a new Spectora file
+parses. It needs no database and no browser, and it is what was used to
+diagnose the entity bug described in NOTES.md:
 
 ```bash
 npm run report -- "sample-data/InterNACHI Residential -2026-09-17.xls"
 ```
+
+The other tooling written along the way is listed under "Reusable pieces in the
+repo" in [NOTES.md](NOTES.md).
 
 ---
 

@@ -202,6 +202,43 @@ customer the same assurance for a fraction of the effort.
 
 ---
 
+## How Hive Inspect imports the same template
+
+The same InterNACHI Residential export was imported into a Hive Inspect trial,
+which is both a check on this importer and the source of the feedback below.
+
+**The two readings of the file agree.** Hive shows the same 13 sections in the
+same order, Exterior expands to the same 7 subsections in the same order, and
+Exterior &rarr; General holds one comment in both. Hive also decodes the escaped
+ampersands, so "Attic, Insulation &amp; Ventilation" reads correctly there too.
+Hive's "Subsection" is the level this schema calls an item. That is independent
+confirmation that the parser landed on the same reading as the product the
+customer would be importing into.
+
+**Where the two differ.**
+
+| | This app | Hive Inspect |
+|---|---|---|
+| Comment order inside an item | Physical spreadsheet order | Grouped into Information, Limitations and Defects |
+| Saving | Per field, immediately | Batched behind an unsaved-changes bar |
+| Structure editing | Not built | Drag to reorder, add, duplicate, delete |
+| Fields beyond the export | None | Section and subsection descriptions, private notes, a visible toggle |
+| After import | Fidelity report and warnings | The editor, with an unsaved-changes bar |
+
+The ordering difference is the one that matters for this brief. Bucketing
+comments by type cannot preserve an order that interleaves types, and the
+brief makes preserving the inspector's ordering a headline requirement. Both
+choices are defensible; they are just answering different questions.
+
+**What this app has that the import flow did not.** Importing into Hive ends
+on an editor showing "You have unsaved changes" before the inspector has
+touched anything. It behaves normally afterwards, so it is specific to the
+import path rather than a dirty-on-load editor. Whichever way that resolves,
+the import finishes in ambiguity rather than confirmation: nothing says what
+came across, what did not, or whether anything needs attention. That is the
+moment a switching customer decides whether to trust the move, and it is
+exactly the gap the Import Fidelity Report was built to fill.
+
 ## What was left out, and why
 
 - **Editing anything beyond names and comment text.** Severity, answer type,
@@ -291,13 +328,30 @@ says what to do next.
 
 ---
 
+## Reusable pieces in the repo
+
+Small things written along the way that are useful beyond this assignment, kept
+because the brief asks to see how the work was done.
+
+| Path | What it is for |
+|---|---|
+| `scripts/report.mts` | Parses any Spectora export and prints the counts, the full fidelity report and every warning. No database, no browser, no app. This is the fastest way to check whether a new file imports cleanly, and it is what was used to diagnose the entity bug. |
+| `scripts/seed.mts` | Imports the committed sample into whichever database `.env.local` points at. Safe to re-run; `--force` imports another copy. |
+| `.claude/launch.json` | Dev server definition, so an AI coding tool can start and drive the app rather than asking for a screenshot. |
+| `tests/persistence.test.ts` | Opt-in database tests behind `RUN_DB_TESTS=1`, so the same suite runs offline by default and against a real project on demand. |
+
+The database layer was also exercised locally against Postgres 14 with
+PostgREST in front of it, which is the pair Supabase runs. That harness was
+throwaway and is not in the repo; the opt-in tests above are the part worth
+keeping.
+
 ## Time spent
 
 About two days of focused work, in the shape the brief suggested.
 
 | Phase | Roughly |
 |---|---|
-| Exploring Spectora and analysing the real export | 2 hours |
+| Exploring Spectora and Hive Inspect, analysing the real export | 2.5 hours |
 | Data model and import design | 1 hour |
 | Schema, migrations, deep-copy function | 1.5 hours |
 | Parser, entity repair, tests | 4 hours |
