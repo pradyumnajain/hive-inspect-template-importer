@@ -1,35 +1,59 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { deleteTemplateAction, duplicateTemplateAction } from "@/app/actions";
+import { btn } from "@/components/ui";
 
-export function DuplicateButton({ templateId, label = "Duplicate" }: { templateId: string; label?: string }) {
+export function DuplicateButton({
+  templateId,
+  label = "Duplicate",
+  className = btn.secondary,
+}: {
+  templateId: string;
+  label?: string;
+  className?: string;
+}) {
   const [pending, start] = useTransition();
   return (
     <button
       type="button"
       disabled={pending}
       onClick={() => start(() => duplicateTemplateAction(templateId))}
-      className="rounded border border-slate-300 px-2.5 py-1 text-xs font-medium hover:bg-slate-100 disabled:opacity-50"
+      className={className}
     >
-      {pending ? "Copying..." : label}
+      {pending ? "Duplicating" : label}
     </button>
   );
 }
 
 export function DeleteButton({ templateId, name }: { templateId: string; name: string }) {
   const [pending, start] = useTransition();
+  const [confirming, setConfirming] = useState(false);
+
+  // Two steps rather than a browser confirm() dialog: the second click is the
+  // destructive one, and the button says exactly what it will delete.
+  if (confirming) {
+    return (
+      <span className="flex items-center gap-1">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => start(() => deleteTemplateAction(templateId))}
+          className={`${btn.danger} bg-red-50 text-red-700 hover:bg-red-100`}
+          title={`Permanently delete ${name}`}
+        >
+          {pending ? "Deleting" : "Delete for good"}
+        </button>
+        <button type="button" onClick={() => setConfirming(false)} className={btn.quiet}>
+          Keep
+        </button>
+      </span>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => {
-        if (!confirm(`Delete "${name}" and everything in it? This cannot be undone.`)) return;
-        start(() => deleteTemplateAction(templateId));
-      }}
-      className="rounded border border-slate-300 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
-    >
-      {pending ? "Deleting..." : "Delete"}
+    <button type="button" onClick={() => setConfirming(true)} className={btn.danger}>
+      Delete
     </button>
   );
 }

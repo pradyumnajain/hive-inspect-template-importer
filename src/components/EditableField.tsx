@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import type { ActionResult } from "@/app/actions";
+import { btn } from "@/components/ui";
 
 interface Props {
   initialValue: string;
@@ -11,13 +12,25 @@ interface Props {
   className?: string;
   rows?: number;
   placeholder?: string;
+  /** `title` is the big editable heading at the top of a template. */
+  size?: "title" | "heading" | "body";
 }
 
+const SIZES: Record<NonNullable<Props["size"]>, string> = {
+  title: "text-xl font-semibold tracking-tight",
+  heading: "text-sm font-medium",
+  body: "text-sm",
+};
+
 /**
- * One editable value with an explicit Save.
+ * One editable value.
  *
- * Save is deliberate rather than automatic on blur: the reviewer, and the
- * inspector, should be able to see a change being committed.
+ * Save appears only once the value has actually changed. With hundreds of
+ * comments on screen a permanent row of disabled Save buttons made the page
+ * read as a database form rather than a document, so the control stays out of
+ * the way until it has something to do.
+ *
+ * Saving is still per field and immediate, which is what the backend does.
  */
 export function EditableField({
   initialValue,
@@ -25,14 +38,18 @@ export function EditableField({
   label,
   multiline = false,
   className = "",
-  rows = 6,
+  rows = 8,
   placeholder,
+  size = "body",
 }: Props) {
   const [value, setValue] = useState(initialValue);
   const [saved, setSaved] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [pending, startTransition] = useTransition();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   const dirty = value !== saved;
 
@@ -41,19 +58,25 @@ export function EditableField({
     setError(null);
     startTransition(async () => {
       const result = await onSave(value);
-      if (result.ok) {
-        setSaved(value);
-        setJustSaved(true);
-        setTimeout(() => setJustSaved(false), 2000);
-      } else {
+      if (!result.ok) {
         setError(result.error);
+        return;
       }
+      setSaved(value);
+      setJustSaved(true);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setJustSaved(false), 2400);
     });
   }
 
-  const shared =
-    "w-full rounded border px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 " +
-    (dirty ? "border-amber-400 bg-amber-50" : "border-slate-200 bg-white");
+  // Reads as text until you touch it, so a page of editable names does not
+  // look like a page of form inputs.
+  const field =
+    `w-full rounded-md border px-2.5 py-1.5 text-slate-900 transition-colors ` +
+    `placeholder:text-slate-400 focus:outline-none ${SIZES[size]} ` +
+    (dirty
+      ? "border-amber-400 bg-amber-50"
+      : "border-transparent bg-transparent hover:border-slate-200 hover:bg-white focus:border-slate-900 focus:bg-white");
 
   return (
     <div className={className}>
@@ -61,7 +84,7 @@ export function EditableField({
         {multiline ? (
           <textarea
             aria-label={label}
-            className={`${shared} font-mono`}
+            className={`${field} resize-y border-slate-200 bg-white font-mono text-[13px] leading-relaxed`}
             rows={rows}
             value={value}
             placeholder={placeholder}
@@ -70,7 +93,7 @@ export function EditableField({
         ) : (
           <input
             aria-label={label}
-            className={shared}
+            className={field}
             value={value}
             placeholder={placeholder}
             onChange={(e) => setValue(e.target.value)}
@@ -79,21 +102,50 @@ export function EditableField({
                 e.preventDefault();
                 commit();
               }
-              if (e.key === "Escape") setValue(saved);
+              if (e.key === "Escape") {
+                setValue(saved);
+                setError(null);
+              }
             }}
           />
         )}
-        <button
-          type="button"
-          onClick={commit}
-          disabled={!dirty || pending}
-          className="shrink-0 rounded border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {pending ? "Saving" : "Save"}
-        </button>
+
+        {/* Reserve no space when there is nothing to do. */}
+        {(dirty || pending) && (
+          <button
+            type="button"
+            onClick={commit}
+            disabled={pending}
+            className={`${btn.secondary} mt-px shrink-0`}
+          >
+            {pending ? "Saving" : "Save"}
+          </button>
+        )}
       </div>
-      {justSaved && <p className="mt-1 text-xs text-emerald-700">Saved to the database.</p>}
-      {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
+
+      {justSaved && !dirty && (
+        <p className="mt-1 flex items-center gap-1 text-xs font-medium text-emerald-700">
+          <Check /> Saved
+        </p>
+      )}
+      {dirty && !pending && !error && (
+        <p className="mt-1 text-xs text-slate-500">
+          Unsaved. Press {multiline ? "Save" : "Enter, or Save"} to write this to the database.
+        </p>
+      )}
+      {error && (
+        <p className="mt-1 text-xs text-red-700">
+          Not saved. {error}
+        </p>
+      )}
     </div>
+  );
+}
+
+function Check() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden className="h-3.5 w-3.5 fill-none stroke-current stroke-2">
+      <path d="M3 8.5l3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

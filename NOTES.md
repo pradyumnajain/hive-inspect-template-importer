@@ -283,8 +283,11 @@ says what to do next.
   `exceljs`. It affects `uuid` v3/v5/v6 when a buffer is supplied, which
   `exceljs` does not do. Fixing it means downgrading `exceljs` to 3.4, which
   would be worse.
-- The editor renders every section on one page. At 392 comments it is fine.
-  A much larger template would want virtualisation.
+- The editor renders every section on one page, collapsed by default. At 392
+  comments it is fine. A much larger template would want virtualisation.
+- Structure search matches section, item and comment names, not comment text,
+  and filters the rendered tree rather than querying the database. That keeps
+  the hierarchy server-rendered and every save wired exactly as it was.
 
 ---
 

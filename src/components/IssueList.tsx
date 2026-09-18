@@ -1,87 +1,91 @@
 import type { ImportIssue, IssueOrigin } from "@/lib/spectora";
+import { card } from "@/components/ui";
 
 /**
- * Import issues, grouped by the distinction the brief asks for.
+ * Import issues, grouped by whose problem they are.
  *
- * "Missing" and "unsupported" are genuinely different problems and a customer
- * needs to tell them apart: one is something Spectora never exported, the
- * other is something we received and kept but cannot yet edit.
+ * "Missing" and "unsupported" look similar in a list and are completely
+ * different to the customer: one is something Spectora never wrote to the
+ * file, the other is something we received and kept but cannot edit yet. The
+ * grouping is the point, so each group says plainly what it means.
  */
 const GROUPS: { origin: IssueOrigin; title: string; blurb: string }[] = [
   {
     origin: "missing",
-    title: "Missing from the Spectora export",
+    title: "Not in the export",
     blurb:
-      "The export itself does not contain this. No importer could recover it, so it is listed here for the record.",
+      "Spectora did not write this to the file, so no importer could recover it. Listed here so it is not a surprise later.",
   },
   {
     origin: "unsupported",
-    title: "In the export, not supported by this app",
+    title: "Kept, but not editable here",
     blurb:
-      "These values were received and are stored against their comment. This app has no editor for them yet, so nothing was lost, only deferred.",
+      "Received and stored against the comment it belongs to. This app has no editor for it yet, so it is deferred rather than lost.",
   },
   {
     origin: "source",
-    title: "Notes about the source file",
-    blurb: "Things worth knowing about how this particular spreadsheet was put together.",
+    title: "About this file",
+    blurb: "How this particular spreadsheet was put together, and anything that had to be corrected.",
   },
 ];
 
-const SEVERITY_STYLE: Record<string, string> = {
-  error: "border-red-300 bg-red-50 text-red-900",
-  warning: "border-amber-300 bg-amber-50 text-amber-900",
-  info: "border-slate-200 bg-slate-50 text-slate-700",
+const SEVERITY: Record<string, { dot: string; label: string }> = {
+  error: { dot: "bg-red-500", label: "text-red-700" },
+  warning: { dot: "bg-amber-500", label: "text-amber-700" },
+  info: { dot: "bg-slate-300", label: "text-slate-500" },
 };
 
 export function IssueList({ issues }: { issues: ImportIssue[] }) {
   if (issues.length === 0) {
     return (
-      <p className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-        Nothing to report. Every column in this file is one the importer models.
+      <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        Nothing to report. Every column in this file is one the importer understands.
       </p>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {GROUPS.map((group) => {
         const rows = issues.filter((i) => i.origin === group.origin);
         if (rows.length === 0) return null;
         return (
-          <section key={group.origin}>
-            <h3 className="text-sm font-semibold">
-              {group.title}{" "}
-              <span className="font-normal text-slate-500">
-                ({rows.length})
-              </span>
-            </h3>
-            <p className="mt-0.5 mb-2 text-xs text-slate-600">{group.blurb}</p>
-            <ul className="space-y-2">
-              {rows.map((issue, i) => (
-                <li
-                  key={`${issue.code}-${i}`}
-                  className={`rounded border px-3 py-2 text-sm ${SEVERITY_STYLE[issue.severity]}`}
-                >
-                  <div className="flex items-baseline gap-2">
-                    <span className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-[11px] uppercase">
-                      {issue.severity}
-                    </span>
-                    <span className="font-mono text-[11px] opacity-70">{issue.code}</span>
-                    {issue.sourceRow && (
-                      <span className="font-mono text-[11px] opacity-70">row {issue.sourceRow}</span>
+          <section key={group.origin} className={card}>
+            <header className="border-b border-slate-100 px-4 py-3">
+              <h3 className="text-sm font-semibold text-slate-900">
+                {group.title}
+                <span className="ml-1.5 font-mono text-xs font-normal text-slate-400">
+                  {rows.length}
+                </span>
+              </h3>
+              <p className="mt-0.5 max-w-2xl text-xs leading-relaxed text-slate-500">{group.blurb}</p>
+            </header>
+
+            <ul className="divide-y divide-slate-50">
+              {rows.map((issue, i) => {
+                const severity = SEVERITY[issue.severity] ?? SEVERITY.info;
+                return (
+                  <li key={`${issue.code}-${i}`} className="px-4 py-3">
+                    <div className="flex items-baseline gap-2 font-mono text-[11px]">
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${severity.dot}`} aria-hidden />
+                      <span className={severity.label}>{issue.severity}</span>
+                      <span className="text-slate-400">{issue.code}</span>
+                      {issue.sourceRow && <span className="text-slate-400">row {issue.sourceRow}</span>}
+                      {issue.sourceColumn && (
+                        <span className="truncate text-slate-400">{issue.sourceColumn}</span>
+                      )}
+                    </div>
+                    <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-slate-700">
+                      {issue.message}
+                    </p>
+                    {issue.rawValue && (
+                      <pre className="mt-2 overflow-x-auto rounded border border-slate-100 bg-slate-50 p-2.5 font-mono text-[11px] leading-relaxed text-slate-600">
+                        {issue.rawValue}
+                      </pre>
                     )}
-                    {issue.sourceColumn && (
-                      <span className="font-mono text-[11px] opacity-70">{issue.sourceColumn}</span>
-                    )}
-                  </div>
-                  <p className="mt-1">{issue.message}</p>
-                  {issue.rawValue && (
-                    <pre className="mt-1 overflow-x-auto rounded bg-white/70 p-2 font-mono text-[11px]">
-                      {issue.rawValue}
-                    </pre>
-                  )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         );

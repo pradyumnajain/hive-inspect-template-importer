@@ -19,7 +19,8 @@ notes, known limitations and what was deliberately left out are in
    against what is about to be stored, across eleven dimensions, naming the
    source row and column of anything that differs.
 3. **Edit.** Change section names, item names, comment names and comment text.
-   Each change is written to Postgres when you press Save.
+   Each change is written to Postgres when you press Save. Sections and items
+   are collapsed by default, and a search box filters the tree by name.
 4. **Duplicate.** One SQL function deep-copies every level with fresh ids. Edit
    the copy and the original does not move.
 

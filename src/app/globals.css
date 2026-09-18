@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * The app is a migration tool. Its whole job is to make an inspector believe
+ * that four years of tuned content survived the move, so the visual system is
+ * built around one rule:
+ *
+ *   sans  = the person's own words, editable
+ *   mono  = values that came out of their spreadsheet, and figures
+ *
+ * Colour is rationed the same way. Ink carries every primary action, green is
+ * reserved for preservation being confirmed, amber for something they should
+ * read, red for loss. Nothing else is coloured, so when green appears it means
+ * exactly one thing.
+ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ground: #f6f7f9;
+  --color-ink: #111827;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ground);
+  font-family: var(--font-sans);
+  /* Tabular figures everywhere: counts line up between rows. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* One visible focus treatment for the whole app, keyboard only. */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The structure search hides nodes with the `hidden` attribute. */
+[hidden] {
+  display: none !important;
+}
+
+/* The disclosure triangles are replaced by our own chevrons. */
+summary {
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
