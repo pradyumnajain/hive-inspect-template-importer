@@ -8,7 +8,9 @@ Built for the Hive Inspect Forward Deployed Engineer assignment. The design
 notes, the comparison with how Hive Inspect imports the same file, known
 limitations and what was deliberately left out are in [NOTES.md](NOTES.md).
 
-**Reviewer access:** there is no login. Open the live URL and it lands on an
+**Live app:** https://hive-inspect-template-importer-topaz.vercel.app
+
+**Reviewer access:** there is no login. The link above opens on an
 already-imported template. Nothing is gated, and no account or credential is
 needed to import, edit or duplicate.
 
@@ -200,10 +202,12 @@ Four decisions worth knowing, all forced by the real export:
   but not Comment Names or choice options. One decode rule for all of them
   would corrupt one of them, so the exact source string is kept alongside the
   editable display string.
-- **`position` is the sort key, not Spectora's `Order`.** The `Order (w/i item)`
-  column repeats 64 times and skips values in the sample template, so it is
-  stored as data and never sorted on. Physical spreadsheet row order is the
-  truth.
+- **`position` is the sort key, not Spectora's `Order`.** Despite its header,
+  `Order (w/i item)` is scoped to the comment type: it restarts inside each of
+  Spectora's Informational, Limitations and Defects groups, so it ties in 38 of
+  the 69 items and skips values in 4. Physical spreadsheet row order is the
+  truth, and `order_in_item` and `comment_type` are both stored so the grouped
+  view stays derivable. See NOTES.md.
 - **Surrogate keys everywhere.** Comment names repeat inside a single item.
 - **`extra` jsonb.** Every column the app does not model, including ones it has
   never seen, is stored keyed by its exact header and reported as an issue.

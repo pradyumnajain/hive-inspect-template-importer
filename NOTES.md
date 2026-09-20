@@ -28,19 +28,35 @@ zip. It also has no shared-strings table, so every value is an inline string.
 The importer identifies files by magic number and refuses a genuine legacy
 binary `.xls` with instructions for converting it.
 
-**Ordering cannot come from the Order column.** `Order (w/i item)` is
-non-decreasing but it ties and it skips.
+**The Order column is scoped to the comment type, not to the item.** Despite
+its header, `Order (w/i item)` ties constantly: 64 times across the template,
+in 38 of the 69 items. `Exterior > Exterior Doors` has two comments both at
+Order 0.
 
-| Fact about `Order (w/i item)` | Count |
+That looked like corrupt data until a second template was imported and
+Spectora's own editor was visible beside it. Spectora groups comments under
+INFORMATIONAL, LIMITATIONS and DEFECTS headings, and the Order column restarts
+inside each group. Re-scoping the check settles it:
+
+| Scope | Items with duplicate Order values |
 |---|---|
-| Items where row order disagrees with Order ascending | 0 |
-| Tied Order values inside a single item | 64 |
-| Items whose Order values have gaps | 4 |
+| Within the item | 38 of 69 |
+| Within (item, comment type) | 1 of 69 |
 
-`Exterior > Exterior Doors` has two comments both at Order 0. `Exterior >
-Siding, Flashing & Trim` goes 0, 2, 3. Sorting on that column would silently
-reshuffle a template the inspector spent years arranging, so physical row order
-is the sort key and the Order value is kept as data.
+The single exception is a genuine duplicate in the customer's own template:
+`Heating > General` has two informational comments both at Order 0,
+"Homeowner's Responsibility" and "AFUE Rating".
+
+So sorting on `Order` alone would interleave three separate sequences and
+scramble the template. Two further facts make the choice easy. The export does
+not write rows grouped by type either: in 25 of the 69 items the types
+interleave, and `Exterior > Exterior Doors` runs defect, info, then six more
+defects. And `Order` skips values in four items, so it is not even dense.
+
+Physical row order is therefore the sort key, and `comment_type` and
+`order_in_item` are both stored as data. That preserves the file exactly as
+written while keeping everything needed to reconstruct Spectora's own grouped
+view. Neither reading is lost.
 
 **Three different escaping regimes in one file.**
 
@@ -225,10 +241,17 @@ customer would be importing into.
 | Fields beyond the export | None | Section and subsection descriptions, private notes, a visible toggle |
 | After import | Fidelity report and warnings | The editor, with an unsaved-changes bar |
 
-The ordering difference is the one that matters for this brief. Bucketing
-comments by type cannot preserve an order that interleaves types, and the
-brief makes preserving the inspector's ordering a headline requirement. Both
-choices are defensible; they are just answering different questions.
+The ordering difference is the interesting one, and it is not a defect on
+Hive's side. Spectora groups comments by type in its own editor, and its Order
+column restarts inside each group, so Hive's buckets mirror the source model
+more closely than physical row order does.
+
+This app keeps row order instead, for one reason: it is what the file says,
+and it is the only reading that survives a file whose types interleave, which
+25 of the 69 items do. Because `comment_type` and `order_in_item` are both
+stored, the grouped view is derivable from what is saved, so the choice costs
+nothing. Going the other way is not true: grouping on import would discard the
+file's own sequence.
 
 **What this app has that the import flow did not.** Importing into Hive ends
 on an editor showing "You have unsaved changes" before the inspector has
@@ -248,10 +271,16 @@ exactly the gap the Import Fidelity Report was built to fill.
 - **Reordering, adding and deleting sections, items or comments.** Preservation
   and safe editing were the priority. The schema supports it: `position` is
   already the sort key.
-- **A rich text editor.** Comment text is edited as HTML in a textarea with a
-  live rendered preview beside it. A WYSIWYG editor would have normalised the
-  markup on every keystroke, which is exactly the silent rewriting this project
-  is about avoiding.
+- **A rich text editor.** Opening a comment shows its text the way it will
+  read, links and all. The markup underneath appears only after the inspector
+  presses Edit text, and then with a live preview beside it. So a home
+  inspector browsing their template never meets a tag, and the one who chooses
+  to edit gets the real thing rather than an approximation.
+
+  A WYSIWYG editor would have normalised the customer's markup on every
+  keystroke, which is precisely the silent rewriting this whole project exists
+  to prevent. Hiding the source until it is wanted solves the readability
+  problem without introducing that one.
 - **Authentication.** Out of scope for the assignment. Row level security is
   enabled with a read-only anon policy, and all writes go through server routes
   holding the service role key, so the setup is not accidentally wide open.
