@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { count } from "@/components/ui";
 
 /**
  * Filter the structure tree by name.
@@ -85,7 +86,7 @@ export function StructureSearch({ totalComments }: { totalComments: number }) {
       </div>
       <p className="w-48 shrink-0 text-right font-mono text-xs text-slate-500" aria-live="polite">
         {matches === null
-          ? `${totalComments.toLocaleString()} comments`
+          ? count(totalComments, "comment")
           : matches === 0
             ? "no matches"
             : `${matches.toLocaleString()} of ${totalComments.toLocaleString()}`}

@@ -31,3 +31,12 @@ export const chip =
   "inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600";
 
 export const card = "rounded-lg border border-slate-200 bg-white";
+
+/**
+ * "1 item", "2 items". A template with one section should not read
+ * "1 sections", and a reader who is being asked to trust this import will
+ * notice.
+ */
+export function count(n: number, singular: string, plural = `${singular}s`): string {
+  return `${n.toLocaleString()} ${n === 1 ? singular : plural}`;
+}

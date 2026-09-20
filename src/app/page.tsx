@@ -3,7 +3,8 @@ import Link from "next/link";
 import { isConfigured } from "@/lib/db/client";
 import { listTemplatesWithCounts } from "@/lib/db/templates";
 import { DuplicateButton, DeleteButton } from "@/components/TemplateActions";
-import { btn, card } from "@/components/ui";
+import { btn, card, count } from "@/components/ui";
+import { absoluteUtc, relativeTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -48,11 +49,11 @@ export default async function HomePage() {
                   </h2>
 
                   <p className="mt-1 font-mono text-xs text-slate-500">
-                    {template.counts.sections} sections
+                    {count(template.counts.sections, "section")}
                     <span className="mx-1.5 text-slate-300">·</span>
-                    {template.counts.items} items
+                    {count(template.counts.items, "item")}
                     <span className="mx-1.5 text-slate-300">·</span>
-                    {template.counts.comments.toLocaleString()} comments
+                    {count(template.counts.comments, "comment")}
                   </p>
 
                   <p className="mt-2 text-xs text-slate-500">
@@ -78,10 +79,12 @@ export default async function HomePage() {
                     )}
                     <span className="mx-1.5 text-slate-300">·</span>
                     edited{" "}
-                    {new Date(template.updated_at).toLocaleString(undefined, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
+                    <time
+                      dateTime={template.updated_at}
+                      title={absoluteUtc(template.updated_at)}
+                    >
+                      {relativeTime(template.updated_at)}
+                    </time>
                   </p>
                 </div>
 

@@ -8,7 +8,7 @@ import { FidelityPanel } from "@/components/FidelityPanel";
 import { IssueList } from "@/components/IssueList";
 import { StructureSearch } from "@/components/StructureSearch";
 import { DuplicateButton } from "@/components/TemplateActions";
-import { btn, card } from "@/components/ui";
+import { btn, card, count } from "@/components/ui";
 import { getLatestImport, getTemplate } from "@/lib/db/templates";
 
 export const dynamic = "force-dynamic";
@@ -56,11 +56,11 @@ export default async function TemplatePage({
               onSave={saveTemplateName.bind(null, template.id)}
             />
             <p className="mt-1 pl-0.5 font-mono text-xs text-slate-500">
-              {template.sections.length} sections
+              {count(template.sections.length, "section")}
               <span className="mx-1.5 text-slate-300">·</span>
-              {itemCount} items
+              {count(itemCount, "item")}
               <span className="mx-1.5 text-slate-300">·</span>
-              {commentCount.toLocaleString()} comments
+              {count(commentCount, "comment")}
               {template.duplicated_from && (
                 <>
                   <span className="mx-1.5 text-slate-300">·</span>
@@ -128,7 +128,7 @@ function StructureView({
                 {section.name}
               </h2>
               <span className="ml-auto font-mono text-xs text-slate-400">
-                {section.items.length} items
+                {count(section.items.length, "item")}
               </span>
             </summary>
 

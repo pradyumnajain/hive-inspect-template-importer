@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { FidelityPanel } from "@/components/FidelityPanel";
 import { IssueList } from "@/components/IssueList";
-import { btn, card, input } from "@/components/ui";
+import { btn, card, count, input } from "@/components/ui";
 import type { ApiError, PreviewPayload } from "@/lib/import-payload";
 
 export default function ImportPage() {
@@ -129,7 +129,7 @@ export default function ImportPage() {
                     <Chevron />
                     {section.name}
                     <span className="ml-auto font-mono text-xs text-slate-400">
-                      {section.items.length} items
+                      {count(section.items.length, "item")}
                     </span>
                   </summary>
                   <div className="ml-3 border-l border-slate-100 pl-3">

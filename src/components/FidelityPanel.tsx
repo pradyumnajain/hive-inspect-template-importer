@@ -1,5 +1,5 @@
 import type { FidelityReport, ImportIssue } from "@/lib/spectora";
-import { card } from "@/components/ui";
+import { card, count } from "@/components/ui";
 
 /**
  * The import fidelity report.
@@ -32,15 +32,15 @@ export function FidelityPanel({
     if (check) lines.push({ ok: check.status === "pass", text: render(check.compared) });
   };
 
-  push("sections", (n) => `${n} sections preserved`);
-  push("items", (n) => `${n} items preserved`);
-  push("comments", (n) => `${n.toLocaleString()} comments preserved`);
+  push("sections", (n) => `${count(n, "section")} preserved`);
+  push("items", (n) => `${count(n, "item")} preserved`);
+  push("comments", (n) => `${count(n, "comment")} preserved`);
   lines.push({
     ok: report.valuesMatched === report.valuesCompared,
     text: `${report.valuesMatched.toLocaleString()} of ${report.valuesCompared.toLocaleString()} values preserved`,
   });
   push("ordering", () => "Original spreadsheet order preserved");
-  push("extra_fields", (n) => `${n.toLocaleString()} unsupported values kept, not dropped`);
+  push("extra_fields", (n) => `${count(n, "unsupported value")} kept, not dropped`);
 
   if (repairedCells !== undefined && repairedCells > 0) {
     lines.push({ ok: true, text: `${repairedCells.toLocaleString()} cells repaired before reading` });
