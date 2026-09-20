@@ -6,7 +6,12 @@ import { EditableField } from "@/components/EditableField";
 import { SafeHtml } from "@/components/SafeHtml";
 import { saveCommentBody, saveCommentName } from "@/app/actions";
 import { toPlainText } from "@/lib/sanitize";
-import { chip } from "@/components/ui";
+import { btn, chip } from "@/components/ui";
+
+/** The rendered comment body, used in both the reading and editing views. */
+const RENDERED =
+  "min-h-10 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed " +
+  "text-slate-700 [&_a]:text-teal-700 [&_a]:underline [&_a]:underline-offset-2 [&_strong]:font-semibold";
 import type { CommentRow } from "@/lib/db/templates";
 
 const TYPE_STYLE: Record<string, string> = {
@@ -35,6 +40,9 @@ const SEVERITY: Record<string, string> = { "-1": "Low", "0": "Medium", "1": "Hig
 export function CommentCard({ comment, templateId }: { comment: CommentRow; templateId: string }) {
   const [textOpen, setTextOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
+  // Opening a comment shows the text as it will read. The markup underneath is
+  // only revealed to someone who has said they want to change it.
+  const [editing, setEditing] = useState(false);
 
   const choices = comment.options.filter((o) => o.kind === "choice");
   const units = comment.options.filter((o) => o.kind === "unit");
@@ -72,7 +80,15 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
         </div>
       </div>
 
-      <details className="group mt-1" onToggle={(e) => setTextOpen(e.currentTarget.open)}>
+      <details
+        className="group mt-1"
+        onToggle={(e) => {
+          const open = e.currentTarget.open;
+          setTextOpen(open);
+          // Collapsing returns the comment to its reading state.
+          if (!open) setEditing(false);
+        }}
+      >
         <summary className="flex cursor-pointer items-center gap-1.5 rounded px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-50 hover:text-slate-700">
           <Chevron />
           <span className="group-open:hidden">
@@ -85,33 +101,49 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
           <span className="hidden group-open:inline">Comment text</span>
         </summary>
 
-        {textOpen && (
-          <div className="mt-2 grid gap-3 pl-2 lg:grid-cols-2">
-            <EditableField
-              label="Comment text"
-              multiline
-              rows={9}
-              placeholder="No comment text. Type here to add some."
-              initialValue={comment.body_html ?? ""}
-              onSave={(value) => saveCommentBody(templateId, comment.id, value)}
-            />
-            <div>
-              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
-                Preview
-              </p>
-              {comment.body_html ? (
-                <SafeHtml
-                  html={comment.body_html}
-                  className="min-h-16 space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-700 [&_a]:text-teal-700 [&_a]:underline [&_a]:underline-offset-2 [&_strong]:font-semibold"
+        {textOpen &&
+          (editing ? (
+            <div className="mt-2 grid gap-3 pl-2 lg:grid-cols-2">
+              <div>
+                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                  Text, as Spectora wrote it
+                </p>
+                <EditableField
+                  label="Comment text"
+                  multiline
+                  rows={9}
+                  placeholder="No comment text. Type here to add some."
+                  initialValue={comment.body_html ?? ""}
+                  onSave={(value) => saveCommentBody(templateId, comment.id, value)}
                 />
+              </div>
+              <div>
+                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                  How it will read
+                </p>
+                {comment.body_html ? (
+                  <SafeHtml html={comment.body_html} className={RENDERED} />
+                ) : (
+                  <p className="rounded-md border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400">
+                    Nothing yet.
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2 pl-2">
+              {comment.body_html ? (
+                <SafeHtml html={comment.body_html} className={RENDERED} />
               ) : (
                 <p className="rounded-md border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400">
                   No comment text.
                 </p>
               )}
+              <button type="button" onClick={() => setEditing(true)} className={`${btn.secondary} mt-2`}>
+                {comment.body_html ? "Edit text" : "Add text"}
+              </button>
             </div>
-          </div>
-        )}
+          ))}
       </details>
 
       <details className="group/src mt-0.5" onToggle={(e) => setSourceOpen(e.currentTarget.open)}>
