@@ -273,14 +273,39 @@ exactly the gap the Import Fidelity Report was built to fill.
   already the sort key.
 - **A rich text editor.** Opening a comment shows its text the way it will
   read, links and all. The markup underneath appears only after the inspector
-  presses Edit text, and then with a live preview beside it. So a home
-  inspector browsing their template never meets a tag, and the one who chooses
-  to edit gets the real thing rather than an approximation.
+  presses Edit text, and then beside a preview that updates as they type. A
+  home inspector browsing their template never meets a tag, and the one who
+  chooses to edit sees the real thing rather than an approximation.
 
-  A WYSIWYG editor would have normalised the customer's markup on every
-  keystroke, which is precisely the silent rewriting this whole project exists
-  to prevent. Hiding the source until it is wanted solves the readability
-  problem without introducing that one.
+  The objection to a WYSIWYG editor is narrower than "it reformats things".
+  Editing is user-initiated, so tidying a comment somebody deliberately changed
+  is not the same as rewriting 282 cells at import time. The real problem is
+  that a rich editor works against a fixed schema and silently discards
+  whatever falls outside it, and this template contains exactly such a case.
+  `Doors, Windows & Interior > Walls > Doorknob Hole` holds this:
+
+  ```html
+  <div class="youtube-embed-wrapper" style="position:relative;padding-bottom:56.25%;...">&nbsp;</div>
+  ```
+
+  A div carrying a class and an inline style is not something a rich text
+  editor models. An inspector opening that comment to fix a typo would destroy
+  the very placeholder this importer detects and reports as a video Spectora
+  dropped. The same risk applies to `target="_blank"`, which is on all 86 links
+  in the template and is routinely stripped.
+
+  Worth keeping the scale in mind: 194 of the 392 comments have no markup at
+  all, 83 empty and 111 plain prose. Tags only appear on the 198 that genuinely
+  contain formatting or links.
+
+  **The next step, if this were to go further.** A constrained editor whose
+  schema is a superset of what the file actually contains, paired with a
+  save-time guard: render the body before and after, compare, and refuse to
+  write if anything outside the inspector's edit moved. That is the fidelity
+  report's idea applied to editing rather than importing, and it would give a
+  non-technical inspector a safe rich editor without trading away the
+  guarantee. It is a real feature rather than an evening's work, which is why
+  it is written down here instead of half-built.
 - **Authentication.** Out of scope for the assignment. Row level security is
   enabled with a read-only anon policy, and all writes go through server routes
   holding the service role key, so the setup is not accidentally wide open.
