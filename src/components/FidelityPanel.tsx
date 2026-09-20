@@ -15,11 +15,18 @@ export function FidelityPanel({
   report,
   issues = [],
   repairedCells,
+  beforeImport = false,
 }: {
   report: FidelityReport;
   issues?: ImportIssue[];
   /** Known on the import preview. Omitted when reading a stored report back. */
   repairedCells?: number;
+  /**
+   * True on the preview, where nothing has been written yet. Past tense there
+   * reads as though the import already happened, which is half of why a reader
+   * can mistake a green panel for a finished job.
+   */
+  beforeImport?: boolean;
 }) {
   const allPassed = report.passed === report.total;
   const find = (id: string) => report.checks.find((c) => c.id === id);
@@ -58,11 +65,19 @@ export function FidelityPanel({
         <div className="flex items-baseline justify-between gap-6">
           <div>
             <h2 className="text-base font-semibold tracking-tight text-slate-900">
-              {allPassed ? "Nothing was lost in this import" : "Some values did not survive"}
+              {allPassed
+                ? beforeImport
+                  ? "Nothing will be lost by importing this"
+                  : "Nothing was lost in this import"
+                : beforeImport
+                  ? "Some values would not survive"
+                  : "Some values did not survive"}
             </h2>
             <p className="mt-1 max-w-xl text-sm text-slate-600">
               {allPassed
-                ? "Every value in the spreadsheet was compared against what is stored, and the two match."
+                ? beforeImport
+                  ? "Every value in the spreadsheet was checked against what would be stored, and the two match. Nothing has been written yet."
+                  : "Every value in the spreadsheet was compared against what is stored, and the two match."
                 : "Each difference is listed below with the spreadsheet row and column it came from."}
             </p>
           </div>

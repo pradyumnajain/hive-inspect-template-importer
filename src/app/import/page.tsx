@@ -108,6 +108,7 @@ export default function ImportPage() {
             report={preview.fidelity}
             issues={preview.issues}
             repairedCells={preview.repairedCells}
+            beforeImport
           />
 
           <section>
@@ -163,30 +164,47 @@ export default function ImportPage() {
             </div>
           </section>
 
-          <section className={`${card} px-5 py-4`}>
-            <label className="block text-sm font-medium text-slate-900" htmlFor="template-name">
-              Name this template
-            </label>
-            <input
-              id="template-name"
-              className={`${input} mt-2 max-w-lg`}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            {errorCount > 0 && (
-              <p className="mt-3 text-sm text-red-800">
-                {errorCount} row{errorCount === 1 ? "" : "s"} could not be placed and will not be
-                imported. Everything else will be.
-              </p>
-            )}
-            <div className="mt-4 flex items-center gap-3">
-              <button type="button" onClick={commit} disabled={busy !== null} className={btn.primary}>
-                {busy === "commit" ? "Importing" : "Import into the database"}
-              </button>
-              {busy === "commit" && <Spinner />}
-            </div>
-          </section>
+          {/* Spacer so the sticky bar never covers the end of the page. */}
+          <div className="h-24" aria-hidden />
         </>
+      )}
+
+      {/* The action stays in reach at every scroll position. Left at the foot
+          of the page it sat below a green panel that reads as "done", and a
+          reader could reasonably stop there without ever importing. */}
+      {preview && (
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-end gap-3 px-8 py-3">
+            <div className="min-w-0 flex-1">
+              <label className="block text-xs font-medium text-slate-500" htmlFor="template-name">
+                Name this template
+              </label>
+              <input
+                id="template-name"
+                className={`${input} mt-1 max-w-lg`}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              {errorCount > 0 && (
+                <p className="max-w-xs text-xs text-red-800">
+                  {errorCount} row{errorCount === 1 ? "" : "s"} could not be placed. Everything else
+                  will be imported.
+                </p>
+              )}
+              {busy === "commit" && <Spinner />}
+              <button
+                type="button"
+                onClick={commit}
+                disabled={busy !== null}
+                className={`${btn.primary} shrink-0`}
+              >
+                {busy === "commit" ? "Importing" : "Import this template"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
