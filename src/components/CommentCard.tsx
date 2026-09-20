@@ -43,6 +43,10 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
   // Opening a comment shows the text as it will read. The markup underneath is
   // only revealed to someone who has said they want to change it.
   const [editing, setEditing] = useState(false);
+  // The in-progress text, so the preview shows what you are typing rather than
+  // what was last saved. Without this the panel would quietly lie while you
+  // edit, which is what makes editing markup feel unsafe.
+  const [draft, setDraft] = useState(comment.body_html ?? "");
 
   const choices = comment.options.filter((o) => o.kind === "choice");
   const units = comment.options.filter((o) => o.kind === "unit");
@@ -114,6 +118,7 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
                   rows={9}
                   placeholder="No comment text. Type here to add some."
                   initialValue={comment.body_html ?? ""}
+                  onValueChange={setDraft}
                   onSave={(value) => saveCommentBody(templateId, comment.id, value)}
                 />
               </div>
@@ -121,8 +126,8 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
                 <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-400">
                   How it will read
                 </p>
-                {comment.body_html ? (
-                  <SafeHtml html={comment.body_html} className={RENDERED} />
+                {draft.trim() ? (
+                  <SafeHtml html={draft} className={RENDERED} />
                 ) : (
                   <p className="rounded-md border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400">
                     Nothing yet.

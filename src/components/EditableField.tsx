@@ -7,6 +7,8 @@ import { btn } from "@/components/ui";
 interface Props {
   initialValue: string;
   onSave: (value: string) => Promise<ActionResult>;
+  /** Fires on every keystroke, so a caller can render a live preview. */
+  onValueChange?: (value: string) => void;
   label: string;
   multiline?: boolean;
   className?: string;
@@ -35,6 +37,7 @@ const SIZES: Record<NonNullable<Props["size"]>, string> = {
 export function EditableField({
   initialValue,
   onSave,
+  onValueChange,
   label,
   multiline = false,
   className = "",
@@ -52,6 +55,11 @@ export function EditableField({
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   const dirty = value !== saved;
+
+  function change(next: string) {
+    setValue(next);
+    onValueChange?.(next);
+  }
 
   function commit() {
     if (!dirty || pending) return;
@@ -88,7 +96,7 @@ export function EditableField({
             rows={rows}
             value={value}
             placeholder={placeholder}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => change(e.target.value)}
           />
         ) : (
           <input
@@ -96,7 +104,7 @@ export function EditableField({
             className={field}
             value={value}
             placeholder={placeholder}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => change(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
