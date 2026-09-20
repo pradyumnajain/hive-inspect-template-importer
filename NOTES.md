@@ -262,6 +262,64 @@ came across, what did not, or whether anything needs attention. That is the
 moment a switching customer decides whether to trust the move, and it is
 exactly the gap the Import Fidelity Report was built to fill.
 
+## How Binsr imports the same template
+
+The same export was also run through Binsr, which turns the comparison into
+three independent readings of one file.
+
+**All three agree.** Binsr reports 392 rows, 13 sections and 69 line items
+before importing, and after importing its section list matches this app row for
+row: same thirteen names in the same order, same item count and same comment
+count in every one, 392 in total. It decodes the escaped ampersands correctly
+too. When three separate implementations read a file the same way, a claim that
+the parse is right stops being self-assessment.
+
+**They ask different questions.** Hive asks which product you are leaving, from
+a list of four. Binsr asks only whether the file is CSV or Excel, then shows
+every column, its guessed target and a real sample value, and lets you remap or
+skip before it acts.
+
+| | Hive | Binsr | This app |
+|---|---|---|---|
+| What the user declares | The vendor | The column mapping | Nothing |
+| How the file is read | Vendor-specific parser | Generic, user-confirmed | Detected from the header row |
+| If the case is not covered | Chat support, "if it is possible" | Email it, "we'll convert it for you" | Refused, with what to upload instead |
+
+Both approaches cost something real. Knowing the vendor lets Hive apply
+knowledge the customer should never have to supply, such as the fact that
+Spectora's Order column restarts inside each comment-type group. Binsr cannot
+know that, which is why it maps Category to Tags and then has to rebuild defect
+levels in a later step. But Hive's list is four products long and everyone else
+reaches a support queue, while Binsr will take a spreadsheet from software
+nobody has heard of.
+
+**What Binsr does that both others could learn from.** It shows its guesses
+before acting, with a sample value beside each column so a wrong guess is
+obvious. It shows provenance on anything derived, labelling a comment type
+"Matched from: info". And it shows per-type counts before you commit: 78
+informational, 12 limitations, 302 deficiencies, which is exactly the split in
+the file. That is the same instinct as the fidelity report here, applied to the
+mapping rather than to the values.
+
+**What it does not do is tell you the content survived.** Counts confirm that
+rows were recognised, not that comment bodies, links or escaping came through
+intact. Nothing in that flow would surface the video embed Spectora dropped.
+Binsr also adds content of its own during import: the type descriptions and all
+four tags, Safety Hazard, Recommendation, Maintenance Item and Other, are its
+defaults rather than anything in the export. It is upfront about it and they can
+be removed, but this importer adds nothing that was not in the file.
+
+**On using a model.** Binsr offers AI-Powered Import as its recommended path and
+labels the alternative "no AI, fully deterministic". This importer is the
+deterministic kind. The mapping is fully specified by the header row, so a model
+would add latency and unpredictability and still need exactly the validation
+that is already here.
+
+**Not verified.** Whether Binsr preserves comment HTML and its links through the
+round trip, and which of the two Order 0 comments under `Exterior > Exterior
+Doors` it lists first, which would show whether it keeps file order or groups by
+type. Both were left unchecked rather than guessed at.
+
 ## What was left out, and why
 
 - **Editing anything beyond names and comment text.** Severity, answer type,
