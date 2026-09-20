@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import {
   deleteTemplate,
   duplicateTemplate,
+  listTemplates,
+  nextCopyName,
   renameItem,
   renameSection,
   renameTemplate,
@@ -75,9 +77,15 @@ export async function saveTemplateName(templateId: string, name: string): Promis
 }
 
 export async function duplicateTemplateAction(templateId: string): Promise<void> {
-  const newId = await duplicateTemplate(templateId);
+  const templates = await listTemplates();
+  const source = templates.find((t) => t.id === templateId);
+  const name = source ? nextCopyName(source.name, templates.map((t) => t.name)) : undefined;
+
+  const newId = await duplicateTemplate(templateId, name);
   revalidatePath("/");
-  redirect(`/templates/${newId}`);
+  // `copied` tells the new template's page to confirm what just happened,
+  // since a silent redirect leaves the user guessing whether it worked.
+  redirect(`/templates/${newId}?copied=1`);
 }
 
 export async function deleteTemplateAction(templateId: string): Promise<void> {

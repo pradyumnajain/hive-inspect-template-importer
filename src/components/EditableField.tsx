@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import type { ActionResult } from "@/app/actions";
 import { btn } from "@/components/ui";
+import { useTrackUnsaved } from "@/components/unsaved";
 
 interface Props {
   initialValue: string;
@@ -55,6 +56,10 @@ export function EditableField({
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   const dirty = value !== saved;
+
+  // Let the page know this field is holding an unsaved edit, so leaving
+  // the page can warn instead of discarding it silently.
+  useTrackUnsaved(useId(), dirty);
 
   function change(next: string) {
     setValue(next);
@@ -138,7 +143,7 @@ export function EditableField({
       )}
       {dirty && !pending && !error && (
         <p className="mt-1 text-xs text-slate-500">
-          Unsaved. Press {multiline ? "Save" : "Enter, or Save"} to write this to the database.
+          Not saved yet. Press {multiline ? "Save" : "Enter or Save"} to keep this change.
         </p>
       )}
       {error && (

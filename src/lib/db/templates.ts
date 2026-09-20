@@ -437,6 +437,23 @@ export async function updateComment(
 }
 
 /** Deep copy via the SQL function, so it is atomic and shares no rows. */
+/**
+ * Name a copy without stacking suffixes.
+ *
+ * The SQL function's default appends " (copy)", so duplicating a copy produced
+ * "Template (copy) (copy)". Strip any existing suffix first, then take the
+ * lowest number that is free: "(copy)", then "(copy 2)", "(copy 3)".
+ */
+export function nextCopyName(sourceName: string, existingNames: string[]): string {
+  const base = sourceName.replace(/\s*\(copy(?:\s+\d+)?\)\s*$/i, "").trim() || sourceName;
+  const taken = new Set(existingNames.map((n) => n.toLowerCase()));
+
+  for (let n = 1; ; n += 1) {
+    const candidate = n === 1 ? `${base} (copy)` : `${base} (copy ${n})`;
+    if (!taken.has(candidate.toLowerCase())) return candidate;
+  }
+}
+
 export async function duplicateTemplate(id: string, newName?: string): Promise<string> {
   const { data, error } = await supabaseWrite().rpc("duplicate_template", {
     p_template_id: id,
