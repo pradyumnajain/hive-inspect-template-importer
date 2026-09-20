@@ -8,7 +8,7 @@ import { FidelityPanel } from "@/components/FidelityPanel";
 import { IssueList } from "@/components/IssueList";
 import { StructureSearch } from "@/components/StructureSearch";
 import { DuplicateButton } from "@/components/TemplateActions";
-import { BackLink, LeaveGuard, UnsavedCount } from "@/components/LeaveGuard";
+import { BackLink, LeaveGuard, SaveAllButton } from "@/components/LeaveGuard";
 import { btn, card, count } from "@/components/ui";
 import { getLatestImport, getTemplate } from "@/lib/db/templates";
 
@@ -59,15 +59,12 @@ export default async function TemplatePage({
       )}
 
       <header className="mb-6">
-        <div className="mb-3 flex items-center gap-3">
-          <BackLink
-            href="/"
-            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
-          >
-            <span aria-hidden>&larr;</span> All templates
-          </BackLink>
-          <UnsavedCount className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-800" />
-        </div>
+        <BackLink
+          href="/"
+          className="mb-3 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
+        >
+          <span aria-hidden>&larr;</span> All templates
+        </BackLink>
 
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0 flex-1">
@@ -97,7 +94,10 @@ export default async function TemplatePage({
               )}
             </p>
           </div>
-          <DuplicateButton templateId={template.id} label="Duplicate" className={btn.secondary} />
+          <div className="flex shrink-0 items-center gap-2">
+            <SaveAllButton className={btn.primary} />
+            <DuplicateButton templateId={template.id} label="Duplicate" className={btn.secondary} />
+          </div>
         </div>
       </header>
 

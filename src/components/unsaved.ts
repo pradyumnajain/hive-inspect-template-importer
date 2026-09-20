@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 /**
  * Tracks which fields on the page have edits that have not been saved.
@@ -17,19 +17,31 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
  * stale entry behind.
  */
 
-const dirty = new Set<string>();
+// id -> a function that saves that field. Holding the callback, not just the
+// id, is what lets one button commit everything at once.
+const dirty = new Map<string, () => void>();
 const listeners = new Set<() => void>();
 
 function emit() {
   for (const listen of listeners) listen();
 }
 
-export function markDirty(id: string, isDirty: boolean): void {
+export function markDirty(id: string, isDirty: boolean, commit?: () => void): void {
   const had = dirty.has(id);
-  if (isDirty === had) return;
-  if (isDirty) dirty.add(id);
-  else dirty.delete(id);
-  emit();
+  if (!isDirty) {
+    if (!had) return;
+    dirty.delete(id);
+    emit();
+    return;
+  }
+  // Always refresh the callback: it closes over the field's current value.
+  dirty.set(id, commit ?? (() => {}));
+  if (!had) emit();
+}
+
+/** Save every field holding an unsaved edit. */
+export function saveAllDirty(): void {
+  for (const commit of [...dirty.values()]) commit();
 }
 
 function subscribe(listener: () => void): () => void {
@@ -46,10 +58,21 @@ export function useUnsavedCount(): number {
   );
 }
 
-/** Keep one field's dirty state in the store, and clear it on unmount. */
-export function useTrackUnsaved(id: string, isDirty: boolean): void {
+/**
+ * Keep one field's dirty state and its save function in the store, and clear
+ * both on unmount. `commit` is read through a ref so the stored callback always
+ * saves the field's latest value rather than the value it had when registered.
+ */
+export function useTrackUnsaved(id: string, isDirty: boolean, commit: () => void): void {
+  const latest = useRef(commit);
+
+  // Refresh after every render, so the stored callback is never stale.
   useEffect(() => {
-    markDirty(id, isDirty);
+    latest.current = commit;
+  });
+
+  useEffect(() => {
+    markDirty(id, isDirty, () => latest.current());
     return () => markDirty(id, false);
   }, [id, isDirty]);
 }

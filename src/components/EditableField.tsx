@@ -59,7 +59,8 @@ export function EditableField({
 
   // Let the page know this field is holding an unsaved edit, so leaving
   // the page can warn instead of discarding it silently.
-  useTrackUnsaved(useId(), dirty);
+  // `commit` is a hoisted declaration, so registering it here is fine.
+  useTrackUnsaved(useId(), dirty, commit);
 
   function change(next: string) {
     setValue(next);

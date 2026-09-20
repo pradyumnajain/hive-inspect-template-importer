@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useConfirmLeave, useUnsavedCount, useWarnOnLeave } from "@/components/unsaved";
+import {
+  saveAllDirty,
+  useConfirmLeave,
+  useUnsavedCount,
+  useWarnOnLeave,
+} from "@/components/unsaved";
 
 /**
  * Warns before unsaved edits are thrown away.
@@ -55,5 +60,30 @@ export function UnsavedCount({ className }: { className?: string }) {
     <span className={className}>
       {count === 1 ? "1 unsaved change" : `${count} unsaved changes`}
     </span>
+  );
+}
+
+/**
+ * Saves every field holding an unsaved edit.
+ *
+ * Each field keeps its own Save, which is how you demonstrate one change
+ * reaching the database. This is the convenience on top, for someone who has
+ * renamed several things and does not want to click through them one at a
+ * time. It says how many changes it will write, and it is disabled when there
+ * is nothing to write, so it never claims something is outstanding when
+ * nothing is.
+ */
+export function SaveAllButton({ className }: { className?: string }) {
+  const count = useUnsavedCount();
+  return (
+    <button
+      type="button"
+      onClick={() => saveAllDirty()}
+      disabled={count === 0}
+      className={className}
+      title={count === 0 ? "Nothing to save" : undefined}
+    >
+      {count === 0 ? "Saved" : count === 1 ? "Save 1 change" : `Save ${count} changes`}
+    </button>
   );
 }
