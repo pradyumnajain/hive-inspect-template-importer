@@ -38,7 +38,10 @@ const SEVERITY: Record<string, string> = { "-1": "Low", "0": "Medium", "1": "Hig
  * disclosure is instant and offline-safe.
  */
 export function CommentCard({ comment, templateId }: { comment: CommentRow; templateId: string }) {
-  const [textOpen, setTextOpen] = useState(false);
+  // Latched, not mirrored. Once the text has been opened it stays mounted, and
+  // <details> hides it natively when collapsed. Unmounting it discarded a draft
+  // the moment someone collapsed the comment by accident.
+  const [textEverOpened, setTextEverOpened] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
   // Opening a comment shows the text as it will read. The markup underneath is
   // only revealed to someone who has said they want to change it.
@@ -53,6 +56,7 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
   const extraKeys = Object.keys(comment.extra);
   const sourceFieldCount = choices.length + units.length + extraKeys.length + 1;
   const excerpt = comment.body_html ? toPlainText(comment.body_html, 120) : "";
+  const bodyDirty = draft !== (comment.body_html ?? "");
 
   return (
     <li
@@ -88,9 +92,10 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
         className="group mt-1"
         onToggle={(e) => {
           const open = e.currentTarget.open;
-          setTextOpen(open);
-          // Collapsing returns the comment to its reading state.
-          if (!open) setEditing(false);
+          if (open) setTextEverOpened(true);
+          // Collapsing returns the comment to its reading state, but only when
+          // there is no unsaved edit to lose by doing so.
+          if (!open && !bodyDirty) setEditing(false);
         }}
       >
         <summary className="flex cursor-pointer items-center gap-1.5 rounded px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-50 hover:text-slate-700">
@@ -103,9 +108,14 @@ export function CommentCard({ comment, templateId }: { comment: CommentRow; temp
             )}
           </span>
           <span className="hidden group-open:inline">Comment text</span>
+          {bodyDirty && (
+            <span className="ml-auto shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-800">
+              unsaved
+            </span>
+          )}
         </summary>
 
-        {textOpen &&
+        {textEverOpened &&
           (editing ? (
             <div className="mt-2 grid gap-3 pl-2 lg:grid-cols-2">
               <div>
