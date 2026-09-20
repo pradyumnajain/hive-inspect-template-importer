@@ -31,9 +31,6 @@ export default async function HomePage() {
     <div>
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Templates</h1>
-        <p className="mt-1.5 text-sm text-slate-600">
-          Imported Spectora templates. Edits and copies live in Postgres and survive a refresh.
-        </p>
       </header>
 
       {templates.length === 0 ? <EmptyState /> : (
@@ -116,10 +113,6 @@ function EmptyState() {
           Import a template
         </Link>
       </div>
-      <p className="mt-4 text-xs text-slate-500">
-        Or run <code className="rounded bg-slate-100 px-1 font-mono">npm run seed</code> to load the
-        sample template.
-      </p>
     </div>
   );
 }
