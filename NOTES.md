@@ -253,13 +253,31 @@ stored, the grouped view is derivable from what is saved, so the choice costs
 nothing. Going the other way is not true: grouping on import would discard the
 file's own sequence.
 
-**What this app has that the import flow did not.** Importing into Hive ends
-on an editor showing "You have unsaved changes" before the inspector has
-touched anything. It behaves normally afterwards, so it is specific to the
-import path rather than a dirty-on-load editor. Whichever way that resolves,
-the import finishes in ambiguity rather than confirmation: nothing says what
-came across, what did not, or whether anything needs attention. That is the
-moment a switching customer decides whether to trust the move, and it is
+**What this app has that the import flow did not.** Importing into Hive ends on
+an editor already showing "You have unsaved changes", before the inspector has
+touched anything.
+
+That was tested rather than assumed. Import, touch nothing, do not save, close
+the tab and reopen: the template is intact, 13 sections, 7 subsections under
+Exterior, "Inspection Method" under Exterior and General, and the bar is still
+there. Pressing Save once clears it permanently, after which it appears only on
+a real edit. So it is a per-template flag set at import and cleared by the first
+save, not a dirty-on-load editor.
+
+**It is not data loss, and should not be described as such.** The content is
+safe. The message is what is wrong: there are no unsaved changes, nothing is at
+risk, and the product says otherwise at the one moment a switching customer is
+deciding whether to trust the move. They finish an import and meet an alarm
+that never says what is unsaved or what would be lost. A warning that is always
+on the first visit also trains people to click through it, which spends the
+credibility of a genuine one later.
+
+The generous reading is that this is a deliberate review-then-confirm gate on
+imports, in which case the mechanism is fine and only the wording is wrong.
+"You have unsaved changes" describes something that did not happen; "Review
+this import and save to confirm" describes what is actually happening.
+
+Either way the import ends in ambiguity rather than confirmation, and that is
 exactly the gap the Import Fidelity Report was built to fill.
 
 ## How Binsr imports the same template
