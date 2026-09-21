@@ -396,7 +396,7 @@ type. Both were left unchecked rather than guessed at.
 
 ## How it was checked
 
-**56 tests, all passing.** 44 run with no database; 12 need one.
+**72 tests, all passing.** 60 run with no database; 12 need one.
 
 ```bash
 npm test                  # parser + fidelity, offline
